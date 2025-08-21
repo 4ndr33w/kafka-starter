@@ -14,11 +14,11 @@ properties:
       request-timeout-ms: 30000
       max-in-flight-requests: 5
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
 
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
       topic: test-topic
       group-id: my-group
       max-poll-records: 1000
@@ -33,4 +33,3 @@ properties:
       max-retries: 5
 
     min.insync.replicas: 1
-    avro-schema-path: ${project.basedir}/src/main/resources/avro/message.avdl

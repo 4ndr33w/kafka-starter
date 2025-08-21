@@ -9,6 +9,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -28,9 +30,11 @@ import java.util.Map;
  * @version 1.0
  */
 @AutoConfiguration
+@EnableKafka
 @ConditionalOnClass({ KafkaTemplate.class, ConcurrentKafkaListenerContainerFactory.class })
 @EnableConfigurationProperties(KafkaProperties.class)
 @ConditionalOnProperty(prefix = "properties.kafka", name = "bootstrap-servers")
+@Import(KafkaConverterAutoConfiguration.class)
 @RequiredArgsConstructor
 public class KafkaAutoConfiguration {
 
@@ -38,7 +42,7 @@ public class KafkaAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ProducerFactory<String, byte[]> producerFactory() {
+    public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServers());
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, properties.getProducer().getKeySerializer());
@@ -57,7 +61,7 @@ public class KafkaAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ConsumerFactory<String, byte[]> consumerFactory() {
+    public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServers());
         config.put(ConsumerConfig.GROUP_ID_CONFIG, properties.getConsumer().getGroupId());
@@ -73,32 +77,27 @@ public class KafkaAutoConfiguration {
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, properties.getConsumer().getAutoOffsetReset());
         config.putAll(properties.getConsumer().getConfig());
 
-        System.out.println("----------------------------------------------");
-        System.out.println("----------------------------------------------");
-        System.out.println("----------------------------------------------");
-        System.out.println(properties.getBootstrapServers());
-        System.out.println("----------------------------------------------");
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public KafkaTemplate<String, byte[]> kafkaTemplate(ProducerFactory<String, byte[]> producerFactory) {
-        KafkaTemplate<String, byte[]> template = new KafkaTemplate<>(producerFactory);
+    public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> producerFactory) {
+        KafkaTemplate<String, Object> template = new KafkaTemplate<>(producerFactory);
         template.setDefaultTopic(properties.getProducer().getTopic());
         return template;
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public ConcurrentKafkaListenerContainerFactory<String, byte[]> kafkaListenerContainerFactory(
-            ConsumerFactory<String, byte[]> consumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, byte[]> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
+            ConsumerFactory<String, Object> consumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
-        factory.setConcurrency(1); // Параллелизм
-        factory.getContainerProperties().setPollTimeout(3000); // Таймаут опроса
-        factory.setCommonErrorHandler(errorHandler()); // Настраиваем обработку ошибок с ретраями
+        factory.setConcurrency(1);
+        factory.getContainerProperties().setPollTimeout(3000);
+        factory.setCommonErrorHandler(errorHandler());
         return factory;
     }
 
@@ -111,7 +110,7 @@ public class KafkaAutoConfiguration {
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(
                 (record, exception) -> {
                     System.err.println("Failed to process record: " + record + ", exception: " + exception.getMessage());
-                }, // Логирование ошибок
+                },
                 backOff
         );
         return errorHandler;

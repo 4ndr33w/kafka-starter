@@ -2,7 +2,6 @@ package planner.project.spring_boot_starter_kafka.config;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import planner.project.spring_boot_starter_kafka.config.consumer.Consumer;
 import planner.project.spring_boot_starter_kafka.config.producer.Producer;

@@ -1,6 +1,5 @@
 package planner.project.spring_boot_starter_kafka.config.producer;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,7 +21,7 @@ public class Producer {
     private String valueSerializer;
     private String topic;
     private boolean idempotenceEnabled ; // Идемпотентность для надежности
-    private int acks; // Подтверждения: 0, 1, all
+    private int acks; // Подтверждения: 0, 1, -1 (all)
     private int retries; // Количество попыток при сбоях
     private int retryBackoffMs; // Задержка между ретраями
     private int deliveryTimeoutMs; // Таймаут доставки
